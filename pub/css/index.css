@@ -1,0 +1,87 @@
+body {
+  padding-top: 60px;
+  height: 1000px;
+}
+h2 .badge {
+  font-size: 20px;
+}
+.script-list-cont,
+.selected-list-cont {
+  box-shadow: inset 0px 4px 5px #fff;
+  border-top: 1px solid #eee;
+  padding: 0px;
+  height: 300px;
+  overflow-y: auto;
+table
+  border: 1px solid #eee;
+  margin: 0px;
+}
+.add-btn {
+  display: none;
+  float: right;
+  border-radius: 14px;
+}
+.add-btn .txt {
+  margin-top: 4px;
+}
+.add-btn:focus {
+  box-shadow: 0px 0px 6px #2f96b4;
+}
+.selected-list-cont td {
+  cursor: move;
+}
+td.select-btn {
+  cursor: pointer;
+  width: 20px;
+}
+td.select-btn .icn {
+  padding: 4px;
+  margin-right: 25px;
+  border-radius: 15px;
+  border: 1px solid #ccc;
+  opacity: 0.5;
+}
+td.select-btn:hover .icn {
+  opacity: 1;
+}
+td.select-btn:hover .icn.right {
+  background-color: rgba(0,100,0,0.3);
+}
+td.select-btn:hover .icn.left {
+  background-color: rgba(100,0,0,0.3);
+}
+img.wait {
+  display: none;
+}
+td.code {
+  text-align: center;
+}
+td.code span.label {
+  background-color: #eee;
+  color: #333;
+  padding: 4px;
+}
+#bundle-view {
+  margin-top: 15px;
+}
+#bundle-view .progress {
+  margin-left: 0px;
+  display: none;
+}
+#bundle-view .curl {
+  padding: 2px;
+  margin: 5px;
+  margin-left: 0px;
+}
+.src-view {
+  display: none;
+}
+.src-view pre.src {
+  padding-right: 10px;
+  height: 200px;
+}
+.src-view .logo img {
+  width: 100px;
+  margin: 40px;
+  margin-left: 30px;
+}
