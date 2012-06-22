@@ -17,7 +17,7 @@
       });
       link({
         rel: 'stylesheet',
-        href: '/css/bootstrap.min.css'
+        href: '/css/bootstrap.css'
       });
       return link({
         rel: 'stylesheet',
@@ -25,6 +25,57 @@
       });
     });
     return body(function() {
+      div({
+        "class": 'navbar navbar-fixed-top'
+      }, function() {
+        return div({
+          "class": 'navbar-inner'
+        }, function() {
+          return div({
+            "class": 'container'
+          }, function() {
+            a({
+              "class": 'brand'
+            }, 'scrundle.me');
+            ul({
+              "class": 'nav'
+            }, function() {
+              li(function() {
+                return a({
+                  href: '#'
+                }, 'About');
+              });
+              li(function() {
+                return a({
+                  href: '#finder-view'
+                }, 'Find & Bundle Scripts');
+              });
+              return li(function() {
+                return a({
+                  href: '#why'
+                }, 'Why?');
+              });
+            });
+            return ul({
+              "class": 'nav pull-right user-info'
+            }, function() {
+              li({
+                "class": "divider-vertical"
+              });
+              return li(function() {
+                return a({
+                  href: '/auth/twitter'
+                }, function() {
+                  i({
+                    "class": 'icon-twitter'
+                  });
+                  return text(' Sign in');
+                });
+              });
+            });
+          });
+        });
+      });
       div({
         "class": 'container main'
       }, function() {});
@@ -44,10 +95,22 @@
         type: 'text/javascript',
         src: '/socket.io/socket.io.js'
       });
-      return script({
+      if (this.session) {
+        script({
+          id: 'sessionBootstrap',
+          type: 'text/javascript'
+        }, "window.session = " + (JSON.stringify(this.session)) + "; \nwindow.user = " + (JSON.stringify(this.user)) + "; \nsetTimeout(function() { $('#sessionBootstrap').remove(); }, 3000 );");
+      }
+      script({
         type: 'text/javascript',
         src: '/js/client.js'
       });
+      if (this.user) {
+        return script({
+          type: 'text/javascript',
+          src: '/js/user.js'
+        });
+      }
     });
   });
 

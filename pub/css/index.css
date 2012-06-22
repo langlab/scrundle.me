@@ -1,18 +1,63 @@
 body {
-  padding-top: 60px;
-  height: 1000px;
+  margin-top: 40px;
+  background-color: #eee;
 }
 h2 .badge {
   font-size: 20px;
+  background-color: #400080;
+}
+.navbar a {
+  border-bottom: none;
+}
+.navbar .user-info img {
+  height: 24px;
+}
+.title {
+  padding-top: 30px;
+  margin: 0px;
+}
+.title img {
+  height: 100px;
+  float: left;
+}
+.title .code {
+  margin: 20px;
+}
+.title .instructions {
+  margin-top: 26px;
+  margin-left: 20px;
+}
+.title .terminal {
+  color: #00a200;
+  background-color: #fff;
+  padding: 2px 6px 2px 6px;
+  margin: 20px;
+  border-radius: 5px;
+  font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
+}
+.title .link {
+  color: #08c;
+  margin: 20px;
+  padding: 2px 6px 2px 6px;
+  font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
+}
+.title .code {
+  margin-top: 20px;
+  margin-bottom: 20px;
 }
 .script-list-cont,
 .selected-list-cont {
-  box-shadow: inset 0px 4px 5px #fff;
-  border-top: 1px solid #eee;
   padding: 0px;
   height: 300px;
   overflow-y: auto;
-table
+  overflow-x: hidden;
+}
+.script-list-cont tbody,
+.selected-list-cont tbody {
+  box-shadow: inset 0px 4px 5px #fff;
+}
+.script-list-cont table,
+.selected-list-cont table {
   border: 1px solid #eee;
   margin: 0px;
 }
@@ -26,6 +71,9 @@ table
 }
 .add-btn:focus {
   box-shadow: 0px 0px 6px #2f96b4;
+}
+.selected-cont {
+  display: none;
 }
 .selected-list-cont td {
   cursor: move;
@@ -56,13 +104,14 @@ img.wait {
 td.code {
   text-align: center;
 }
-td.code span.label {
-  background-color: #eee;
-  color: #333;
+.label {
+  color: #fff;
   padding: 4px;
 }
 #bundle-view {
   margin-top: 15px;
+  display: none;
+  min-height: 500px;
 }
 #bundle-view .progress {
   margin-left: 0px;
@@ -79,9 +128,109 @@ td.code span.label {
 .src-view pre.src {
   padding-right: 10px;
   height: 200px;
+  border: 2px solid #57c0ff;
 }
 .src-view .logo img {
   width: 100px;
   margin: 40px;
   margin-left: 30px;
+}
+iframe.with-float-bar {
+  position: fixed;
+  top: 0px;
+  left: 0px;
+  right: 0px;
+  bottom: 0px;
+  width: 100%;
+  height: 100%;
+}
+.nav-tabs {
+  width: 50px;
+  background-color: #eee;
+  font-weight: bold;
+  height: 100%;
+}
+.nav-tabs li a {
+  color: #333;
+  opacity: 0.3;
+}
+.nav-tabs li.active a {
+  opacity: 1;
+  background-color: #fff;
+  color: #000;
+}
+.nav-tabs li.active:hover a {
+  opacity: 1;
+}
+.nav-tabs li:hover a {
+  background-color: #fff;
+  opacity: 0.8;
+}
+.tab-content {
+  border-left: 3px solid #fff;
+}
+.tab-content iframe {
+  height: 100%;
+  width: 100%;
+}
+.tab-content a {
+  color: #08c;
+  border-bottom: 1px dotted;
+}
+.tab-content a:hover {
+  text-decoration: none;
+}
+.tab-pane {
+  border-left: 3px solid #fff;
+  position: fixed;
+  top: 0px;
+  left: 50px;
+  right: 0px;
+  bottom: 0px;
+  height: 100%;
+}
+.docs-bar {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  opacity: 0.5;
+  white-space: nowrap;
+}
+.docs-bar .btn {
+  font-size: 18px;
+}
+.docs-bar .handle {
+  cursor: move;
+  padding: 3px;
+}
+.docs-bar a {
+  padding: 2px;
+}
+.docs-bar img {
+  height: 19px;
+}
+.left-bar {
+  position: fixed;
+  top: 0px;
+  left: 0px;
+  right: 40px;
+  bottom: 0px;
+  padding: 0px;
+  margin: 0px;
+  width: 40px;
+}
+.left-bar li {
+  padding: 4px;
+}
+.left-bar img {
+  height: 19px;
+}
+.docs-bar:hover {
+  opacity: 1;
+}
+.edit-view .code {
+  margin-right: 10px;
+}
+#BB_BuyButtonForm input[type=image] {
+  width: 121px;
 }

@@ -1,20 +1,75 @@
 body
-  padding-top 60px
-  height 1000px
+  margin-top 40px
+  background-color #eee
 
 h2 .badge
   font-size 20px
+  background-color #400080
+
+
+// navbar view
+
+.navbar
+  a
+    border-bottom none
+
+  .user-info
+    img
+      height 24px
+
+
+// about view
+
+.title 
+  padding-top 30px
+  margin 0px
+
+  img
+    height 100px
+    float left
+
+  .code
+    margin 20px
+
+  .instructions
+    margin-top 26px
+    margin-left 20px
+
+
+  .terminal
+    color #00a200
+    background-color white
+    padding 2px 6px 2px 6px
+    margin 20px
+    border-radius 5px
+    font-family Menlo, Monaco, Consolas, "Courier New", monospace
+
+  .link
+    color #08c
+    margin 20px
+    padding 2px 6px 2px 6px
+    font-family Menlo, Monaco, Consolas, "Courier New", monospace
+
+    
+  .code
+    margin-top 20px
+    margin-bottom 20px
+
+
 
 .script-list-cont, .selected-list-cont
-  box-shadow inset 0px 4px 5px white
-  border-top 1px solid #eee
+  
   padding 0px
   height 300px
   overflow-y auto
+  overflow-x hidden
+
+  tbody
+    box-shadow inset 0px 4px 5px white
 
   table
-  border 1px solid #eee
-  margin 0px
+    border 1px solid #eee
+    margin 0px
 
 
 .add-btn
@@ -28,12 +83,13 @@ h2 .badge
 .add-btn:focus
   box-shadow 0px 0px 6px #2F96B4 
 
+.selected-cont
+  display none
 
+.selected-list-cont 
 
-.selected-list-cont td
-  cursor move
-
-
+  td
+    cursor move
 
 
 
@@ -65,13 +121,16 @@ img.wait
 td.code
   text-align center
 
-  span.label
-    background-color #eee
-    color #333
-    padding 4px
+.label
+  //background-color #ccc
+  color white
+  padding 4px
+
 
 #bundle-view
   margin-top 15px
+  display none
+  min-height 500px
 
   .progress
     margin-left 0px
@@ -82,15 +141,128 @@ td.code
     margin 5px
     margin-left 0px
 
+
 .src-view
   display none
 
   pre.src
     padding-right 10px
     height 200px
+    border 2px solid #57c0ff
 
 
   .logo img
     width 100px
     margin 40px
     margin-left 30px
+
+
+iframe.with-float-bar
+  position fixed
+  top 0px
+  left 0px
+  right 0px
+  bottom 0px
+  width 100%
+  height 100%
+
+.nav-tabs
+  width 50px
+  background-color #eee
+  font-weight bold
+  height 100%
+
+  li a
+    color #333
+    opacity 0.3
+
+  li.active a
+    opacity 1
+    background-color white
+    color black
+
+  li.active:hover a
+    opacity 1
+
+  li:hover a
+    background-color white
+    opacity 0.8
+
+
+.tab-content
+
+  border-left 3px solid white
+
+  iframe
+    height 100%
+    width 100%
+
+
+
+  a
+    color #08c
+    border-bottom 1px dotted
+
+  a:hover
+    text-decoration none
+
+.tab-pane
+  border-left 3px solid white
+  position fixed
+  top 0px
+  left 50px
+  right 0px
+  bottom 0px
+  height 100%
+
+.docs-bar
+  position fixed
+  top 10px
+  right 10px
+  opacity 0.5
+  white-space nowrap
+
+  .btn
+    font-size 18px
+
+  .handle
+    cursor move
+    padding 3px
+
+  a
+    padding 2px
+
+  img
+    height 19px
+
+.left-bar
+  position fixed
+  top 0px
+  left 0px
+  right 40px
+  bottom 0px
+  padding 0px
+  margin 0px
+  width 40px
+
+
+  li
+    padding 4px
+
+  img
+    height 19px
+
+
+.docs-bar:hover
+  opacity 1
+
+.edit-view
+
+  .code
+    margin-right 10px
+
+#BB_BuyButtonForm
+  input[type=image]
+    width 121px
+
+

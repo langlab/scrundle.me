@@ -1,3 +1,7 @@
+
+# contains models and view for all users, 
+# even signed out
+
 w = window
 w.sock = w.io.connect 'http://localhost:4444'
 
@@ -40,11 +44,12 @@ Backbone.sync = (method,model,options)->
     options.success data
 
 class Script extends Backbone.Model
-  initialize: ->
-    @id = @attributes.code
+
+  idAttribute: "_id"
 
   defaults:
     selected: false
+    uses: 0
 
   isSelected: -> @get 'selected'
 
@@ -58,7 +63,10 @@ class Scripts extends Backbone.Collection
   model: Script
 
   comparator: (s)->
-    s.get('uses')
+    if (selOrder = s.get('selected')) > 0
+      selOrder
+    else
+      0 - parseInt s.get('uses'), 10
 
   clearNonSelected: ->
     @remove @getUnSelected()
@@ -76,10 +84,10 @@ class Scripts extends Backbone.Collection
     _.map @getSelected(), (s)-> s.get('code')
 
   getUrl: ->
-    "http://scrundle.me/#{ @selectedCodes.join('/') }"
+    "http://scrundle.me/js/#{ @getSelectedCodes().join('/') }"
 
   getPath: ->
-    @selectedCodes.join '/'
+    "/js/#{ @getSelectedCodes().join '/' }"
 
   parse: (resp)->
     console.log 'fetched: ',resp
@@ -106,26 +114,21 @@ Backbone.View::open = (cont = '.main')->
   @
 
 class NavBar extends Backbone.View
-  tagName: 'div'
-  className: 'navbar navbar-fixed-top'
+  el: $('.navbar')
 
-  template: ->
-    div class:'navbar-inner', ->
-      div class:'container', ->
-        a class:'brand', 'scrundle.me'
-        ul class:'nav', ->
-          li ->
-            a href:'#', 'About'
-          li ->
-            a href:'#finder-view', 'Bundle Scripts'
-          li ->
-            a href:'#add-scripts', 'Add New Scripts'
+  menuTemplate: ->
+    li class:'divider-vertical'
+    li class:'dropdown', ->
+      a href:'dropdown-toggle', 'data-toggle':'dropdown', ->
+        img src: "#{@getIconUrl()}"
+        text " #{ @getName() } "
+        b class:'caret'
+      ul class:'dropdown-menu', ->
+        li ->
+          a href:'#', 'hi'
 
-
-
-  render: ->
-    @$el.html ck.render @template
-    @
+  login: (@model)->
+    @$('.user-info').html ck.render @menuTemplate, @model
 
 
 class ScriptView extends Backbone.View
@@ -142,7 +145,7 @@ class ScriptView extends Backbone.View
       td class:'select-btn', -> 
         span class:'icn left', -> i class:'icon-chevron-left'
     td class:'code', ->
-      span class:'label', "#{@model.get('code')}"
+      span class:"label#{ if @model.isSelected() then ' label-info' else ''}", "#{@model.get('code')}"
     td "#{@model.get('title')}"
     td "#{@model.get('description')}"
     if not @model.get 'selected'
@@ -155,6 +158,7 @@ class ScriptView extends Backbone.View
 
   render: ->
     @$el.html ck.render @template, @
+    @$el.attr 'id', @model.id
     @
 
 
@@ -178,6 +182,39 @@ class Finder extends Backbone.View
       @$('.add-btn')[0].focus()
     'keydown .add-btn': 'selectAll'
     'click .add-btn': 'selectAll'
+
+  template: ->
+    div class:'row', ->
+      div class:'span6 pull-left search-cont', ->
+        div 'page-header', ->
+          h2 ->
+            span class:'badge badge-success', '1'
+            text ' Find and select scripts.'
+        div class:'control-group', ->
+          div class:'controls search-control', ->
+            div class:'input-prepend', ->
+              span class:'add-on', ->
+                i class:'icon-search'
+                img class:'wait', src:'/img/wait.gif'
+              input class:'span3 search', type:'text', placeholder:'find scripts to bundle', tabindex:1
+              a class:'btn add-btn btn-info', tabindex:2, ->
+                text '&darr; add all these  '
+                i class:'icon-white icon-chevron-right'
+        div class:'script-list-cont', ->
+          table class:'table', ->
+            tbody ->
+
+      div class:'span6 pull-right selected-cont', ->
+        div class:'page-header', ->
+          h2 ->
+            span class:'badge badge-info', '2'
+            text ' Put them in order.'
+
+        div class:'selected-list-cont', ->  
+          table class:'table', ->
+            thead ->
+              tr -> th colspan:4, class:'count', "&larr; Find some scripts!"
+            tbody ->
 
   selectAll: (e)->
     if e.which in [13,1]
@@ -216,48 +253,32 @@ class Finder extends Backbone.View
     if $(e.target).val() then @$('.add-btn').show()
     else @$('.add-btn').hide()
 
-  template: ->
-    div class:'row', ->
-      div class:'span6 pull-left', ->
-        div 'page-header', ->
-          h2 ->
-            span class:'badge badge-info', '1'
-            text ' Find and select scripts.'
-        div class:'control-group', ->
-          div class:'controls search-control', ->
-            div class:'input-prepend', ->
-              span class:'add-on', ->
-                i class:'icon-search'
-                img class:'wait', src:'/img/wait.gif'
-              input class:'span3 search', type:'text', placeholder:'find scripts to bundle', tabindex:1
-              a class:'btn add-btn btn-info', tabindex:2, ->
-                text 'add all these  '
-                i class:'icon-white icon-chevron-right'
-        div class:'script-list-cont', ->
-          table class:'table', ->
-            tbody ->
+ 
 
-      div class:'span6 pull-right', ->
-        div class:'page-header', ->
-          h2 ->
-            span class:'badge badge-info', '2'
-            text ' Put them in order.'
+  updateSelected: ->
+    cnt = @collection.selectedCount()
+    if cnt
+      @$('.selected-cont').fadeIn()
+      @$('.count').html ck.render ->
+        text 'You have '
+        span class:'label label-info', "#{@}"
+        text " bundled script#{if @ > 1 then 's' else ''}. Drag to order."
+      ,cnt
+    else
+      @$('.selected-cont').fadeOut()
+    @setScriptOrder()
 
-        div class:'selected-cont', ->
-          div class:'selected-list-cont', ->  
-            table class:'table', ->
-              tbody ->
 
   unSelect: (s)->
     s.view.remove().render().$el.prependTo @$('.script-list-cont tbody')
     s.view.delegateEvents()
-    @setSelectedCodes()
+    @updateSelected()
     @
 
   select: (s)->
     s.view.remove().render().$el.appendTo @$('.selected-list-cont tbody')
     s.view.delegateEvents()
-    @setSelectedCodes()
+    @updateSelected()
     @
 
   addScript: (s)->
@@ -270,6 +291,13 @@ class Finder extends Backbone.View
       @addScript s
     @
 
+  setScriptOrder: ->
+    idsInOrder = _.compact _.map @$('.selected-list-cont tr'), (i)-> $(i).attr('id')
+    for id,i in idsInOrder
+      @collection.get(id).set('selected',i+1, {silent:true})
+      @collection.sort {silent: true}
+    @collection.trigger 'change:selectedCodes'
+
   render: ->
     @$el.html ck.render @template
     fixHelper = (e, ui)->
@@ -281,18 +309,12 @@ class Finder extends Backbone.View
       items: 'tr' 
       helper: fixHelper
       cursor: 'move'
-      update: =>
-        @setSelectedCodes()
+      update: (ev,ui)=>
+        @setScriptOrder()
+        
     }).disableSelection()
-
+    @delegateEvents()
     @
-
-  setSelectedCodes: ->
-    @collection.selectedCodes = _.map $('.selected-list-cont .code .label'), (el)-> $(el).text()
-    @collection.trigger 'change:selectedCodes'
-
-
-    
 
 
 class BundleView extends Backbone.View
@@ -312,11 +334,15 @@ class BundleView extends Backbone.View
       console.log 'prog: ', prog = Math.floor (100*count/scriptCount)
       @$('.progress .bar').css('width',"#{prog}%")
 
+    @collection.on 'change:selectedCodes', =>
+      @render()
+
   events:
     'click code, pre':'selectCode'
     'click .loadSrc':'loadSource'
 
   loadSource: ->
+    console.log @collection.getSelectedCodes()
     @io.emit 'scrundle', @collection.getSelectedCodes()
     @$('.loadSrc').hide()
     @$('.progress').show().slideDown({direction: 'left'})
@@ -332,14 +358,17 @@ class BundleView extends Backbone.View
         text ' Get your script bundle.'
 
     div class:'row command-view', ->
-      div class:'span6', ->
-        if (selected = @collection.getSelected()).length
-          div class:'span9', ->
-            h4 class:'', 'Download it from the command line:'
-            code class:'code curl pull-left span9', "curl #{@collection.getUrl()} > bundle.js"
-            button class:'btn btn-info loadSrc', 'or scrundle it here &darr;'
-            div class:'progress progress-striped active span9', ->
-              div class:'bar',style:'width: 0%'
+      if (selected = @collection.getSelected()).length
+        div class:'span9', ->
+          h4 class:'', 'Download it from the command line:'
+          pre class:'code terminal', ->
+            i class:'icon-chevron-right'
+            text "&nbsp;"
+            span class:'curl', "curl #{@collection.getUrl()} > bundle.js"
+          div
+          button class:'btn btn-info loadSrc', 'or scrundle it here &darr;'
+          div class:'progress progress-striped active span9', ->
+            div class:'bar',style:'width: 0%'
           
     div class:'row src-view', ->
       div class:'span9 pull-left', ->
@@ -347,41 +376,212 @@ class BundleView extends Backbone.View
       div class:'logo span3 pull-right', ->
         img src:'/img/logo.svg'
       
-        
-      
-      
   render: ->
     @$el.html ck.render @template, @
+    if @collection.selectedCount() then @$el.fadeIn()
+    else @$el.fadeOut()
+    @delegateEvents()
     @
+
+class AboutView extends Backbone.View
+  tagName:'section'
+  class:'about-view'
+
+  template: ->
+    div class:'hero-unit title', ->
+      img src:'/img/logo.svg'
+      div class:'row', ->
+        div class:'span9', ->
+          h1 "Hi, I'm Scrundle"
+          p "Use my name like a verb and I'll order and bundle scripts in a nice package for you."
+          p "For example, to get jQuery + underscoreJS + backboneJS in order and save locally, just curl an instructional url, like this:"
+          div class:'code',->
+            span class:'code terminal', ->
+              i class:'icon-chevron-right terminal-prompt'
+              text "&nbsp;"
+              span "curl http://scrundle.me/js/$/_/bb > bundle.js"
+          p "I'll even provide you with a single page with docs for your scripts, available here:"
+          div class:'code',->
+            span class:'link', ->
+              i class:'icon-book icon-large'
+              text " "
+              a href:'/#docs/$/_/bb', target:'_blank', "http://scrundle.me/#docs/$/_/bb "
+          p "As you can see, you need to know the special codes for the scripts you want! So, I made a nice tool for you to find and select your scripts."
+          a class:'btn btn-info', href:'#finder-view', 'Get Started!'
+          div class:'container', ->
+            div ->
+              p ->
+                text "Why am I doing this, "
+                a href:'#why', 'you may ask?'
+
+  pullUp: (cb)->
+    @$el.slideUp =>
+      @remove()
+      cb()
+
+  pullDown: (cb)->
+    @$el.appendTo('.main').slideDown cb
+
+  render: ->
+    @$el.html ck.render @template
+    @
+
+class WhyView extends Backbone.View
+  tagName: 'div'
+  className: 'modal hide'
+
+  template: ->
+    div class:'modal-header', ->
+      h2 'Why do I scrundle?'
+    div class:'modal-body', ->
+      p 'My creator got tired of hunting around, copying and pasting urls for every script he needed to quickly get familiar with a library or prototype an idea. So he made me to automate this tedious work for him. The process of learning and experimentation is easier.'
+      h4 'Would you like to help?'
+      p 'There are two ways you can:'
+      ol ->
+        li 'add new javascript urls to the library'
+        li ->
+          text 'make a quick donation to my creator'
+          form action:"https://checkout.google.com/api/checkout/v2/checkoutForm/Merchant/302846056348109", id:"BB_BuyButtonForm", method:"post", name:"BB_BuyButtonForm",target:"_blank", ->
+            input name:"item_name_1",type:"hidden",value:"scrundle donation"
+            input name:"item_description_1",type:"hidden",value:""
+            input name:"item_quantity_1",type:"hidden",value:"1"
+            input name:"item_price_1",type:"hidden",value:"2.0"
+            input name:"item_currency_1",type:"hidden",value:"USD"
+            input name:"shopping-cart.items.item-1.digital-content.url",type:"hidden",value:"http://scrundle.me"
+            input name:"_charset_",type:"hidden",value:"utf-8"
+            input alt:"",src:"https://checkout.google.com/buttons/buy.gif?merchant_id=302846056348109&amp;w=121&amp;h=44&amp;style=white&amp;variant=text&amp;loc=en_US",type:"image"
+
+    div class:'modal-footer', ->
+      button class:'btn btn-success', 'close'
+
+  render: ->
+    @$el.html ck.render @template
+    @
+
+  open: ->
+    @$el.modal('show')
+
+class DocsView extends Backbone.View
+  tagName:'div'
+  className:'docs'
+
+  events:
+    'click .doc.btn': (e)-> 
+      console.log 'click',e
+      @$('.doc').removeClass('btn-info')
+      $(e.target).addClass('btn-info')
+      @loadUrl $(e.target).attr('data-code'), $(e.target).attr('data-url')
+
+  loadUrl: (@code, @url)->
+    console.log @url
+    @$('iframe').attr 'src', @url
+
+
+  template: ->
+    
+    div class:'tabbable tabs-left left-bar ', ->
+      ul class:'nav nav-tabs', ->
+        li ->
+          a class:'', href:'/', ->
+            img src:'/img/logo.svg'
+        @each (scr,i)->
+          li ->
+            a class:'doc',href:"##{ scr.id }", 'data-toggle':'tab', "#{ scr.get('code') }"
+        
+      div class:'tab-content', ->
+        @each (scr,i)->
+          div class:"tab-pane#{ if i is 0 then ' active' else ''}",id:"#{ scr.id }", ->
+            iframe class:'with-left-bar', src:"#{ scr.get('docs') }",frameborder:'0'
+
+
+  template2: ->
+    iframe class:'with-float-bar',src:"#{ @url ?= @first().get('docs') }",frameborder:'0', ->
+    div class:'btn-group docs-bar', ->
+      span class:'btn handle',->
+        i class:'icon-move'
+      a class:'btn doc', href:'/', ->
+        img src:'/img/logo.svg'
+      @each (scr,i)->
+        button class:"btn doc#{ if i is 0 then ' btn-info' else '' }", 'data-code':"#{ scr.get('code')} ", 'data-url':"#{ scr.get('docs') }", "#{ scr.get('code') } "
+
+  render: ->
+    @$el.html ck.render @template, @collection
+    @$('a.doc').click (e)->
+      console.log 'click', $(e.target)
+      e.preventDefault()
+      $(e.target).tab('show')
+
+    @$('a.doc:first').tab('show')
+
+    ###
+    @$('.docs-bar').draggable({
+      handle: '.handle'
+      iframeFix: true
+    }).css({ position: 'absolute', bottom: '10px', right: '10px' })
+    ###
+    @delegateEvents() 
+    @
+
 
 class Router extends Backbone.Router
 
-  initialize: ->
+  initialize: (@session)->
+
     @scripts = new Scripts()
+    @docs = new Scripts()
+    @views = 
+      navBar: new NavBar()
+      about: new AboutView()
+      finder: new Finder { collection: @scripts }
+      bundleView: new BundleView { collection: @scripts }
+      whyView: new WhyView()
+      docsView: new DocsView { collection: @docs }
+      
+
+  closeViews: ->
+    for name,v of @views
+      if name isnt 'navBar' then v.remove()
   
   routes:
     '':'home'
+    'finder-view':'finder'
+    'why':'why'
+    'docs/*list':'docs'
 
   home: ->
-    navBar = (new NavBar()).render().open('body')
+    @closeViews()
+    @scripts.reset()
+    @views.navBar.open('.main')
+    @views.about.render().pullDown()
     
-    @finder = new Finder { collection: @scripts }
-    @finder.render().open('.main')
+  finder: ->
+    @views.about.pullUp =>
+      @views.finder.render().open('.main')
+      @views.bundleView.render().open $('.main')
 
-    @bundleView = new BundleView { collection: @scripts }
-    @bundleView.render().open '.main'
+      @scripts.fetch {
+        add: true
+        success: =>
+          @views.finder.renderScripts()
+          @views.finder.$('.search').focus()
+      }
 
-    @scripts.fetch {
-      add: true
+  why: ->
+    @views.whyView.remove().render().open()
+
+  docs: (list)->
+    @closeViews()
+    @views.navBar.remove()
+    @docs.fetch {
+      list: list.split('/')
       success: =>
-        @finder.renderScripts()
+        @views.docsView.render().open('body')
     }
+    
+  
 
-    @scripts.on 'change:selectedCodes', =>
-      @bundleView.render()
 
-
-w.app = new Router()
+w.app = new Router(w.session)
 w.ck = CoffeeKup
 
 

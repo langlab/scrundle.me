@@ -1,100 +1,54 @@
 
 express = require 'express'
+store = new express.session.MemoryStore()
 ck = require 'coffeekup'
-scriptsJSON = require './scripts'
 _ = require 'underscore'
+db = require './src/srv/db'
+User = db.User
+Script = db.Script
+mongoose = db.mongoose
+Bundler = require './src/srv/bundler'
 
-url = require 'url'
-http = require 'http'
-https = require 'https'
-events = require 'events'
-
-mongoose = require 'mongoose'
-mongoose.connect 'mongodb://localhost/scrundle'
-Schema = mongoose.Schema
-ObjectId = Schema.ObjectId
-
-
-ScriptSchema = new Schema {
-  code: String
-  title: String
-  description: String
-  versions: {}
-}
-
-ScriptSchema.statics =
-  search: (term,cb)->
-    @find({
-      $or: [ 
-        { title: { $regex: term, $options: 'i' } }
-        { description: { $regex: term, $options: 'i' } }
-        { code: { $regex: term, $options: 'i' } } 
-      ]
-    }).exec (err,scripts)=>
-      cb err, scripts
-
-
-Script = mongoose.model 'script', ScriptSchema
-###
-# insert into db
-for s in scriptsJSON
-  scr = new Script s
-  scr.save()
-###
+mongooseAuth = require 'mongoose-auth'
 
 app = express.createServer()
 io = require('socket.io').listen app
 
 app.configure ->
+  app.use express.methodOverride()
   app.use express.static "#{__dirname}/pub"
   app.use express.bodyParser()
+  app.use express.cookieParser()
+  app.use express.session {secret: 'keyboardCat', key: 'express.sid', store: store}
+  app.use mongooseAuth.middleware()
   app.set 'views', "#{__dirname}/src/views"
   app.set 'view options', { layout: false }
   app.set 'view engine', 'coffee'
   app.register '.coffee', require('coffeekup').adapters.express
-
-
-class Bundler extends events.EventEmitter
-
-  getScript: (uri,ord,cb)->
-    rObj = url.parse uri
-    scriptData = ''
-    httpLib = if rObj.protocol is 'https:' then https else http
-    httpLib.get { host: rObj.host, path: rObj.path, port: rObj.port }, (resp)->
-      resp.on 'data', (chunk)->
-        scriptData = scriptData + chunk
-      resp.on 'end', ->
-        cb ord,scriptData
-
-  getBundle: (scriptKeys)->
-    
-    bundle = []
-    scriptsDownloaded = 0
-    
-    
-    Script.where('code').in(scriptKeys).exec (err,scripts)=>  
-      if err then console.log err
-      #console.log scripts
-      scriptTitles = _.map scripts, (scr)-> "#{ scr.title ? '' } (#{ scr.code ? '' })"
-
-      for script,i in scripts
-        @getScript script.versions.latest, i, (ord,scriptData)=>
-          bundle[ord] = scriptData
-          scriptsDownloaded++
-          @emit 'progress', scriptsDownloaded
-          if scriptsDownloaded is scripts.length
-            bundled = '/* scripts bundled with love by scrundle.me -- includes :'+scriptTitles.join(', ')+'*/ \n'
-            @emit 'bundle', bundled + bundle.join ';'
+  app.use express.errorHandler()
 
 
 app.get '/', (req,res)->
-  res.render 'index'
+  res.render 'index', {user: req.user, session: req.session}
+
+app.get '/favicon.ico', (req,res)->
+  res.sendfile "#{__dirname}/pub/img/favicon.ico"
+
 
 app.get '/ck.js', (req,res)->
   res.sendfile "#{__dirname}/node_modules/coffeekup/lib/coffeekup.js"
 
 
-app.get /^\/([^e]+)(\/(.+)\.js)?/, (req,res)->
+app.get '/github/callback', (req,res)->
+  console.log req.query
+  res.redirect '/'
+
+app.get '/twitter/callback', (req,res)->
+  console.log req.query
+  res.redirect '/'
+
+
+app.get /^\/js\/([^e]+)(\/(.+)\.js)?/, (req,res)->
   console.log req.params
 
   bd = new Bundler()
@@ -104,18 +58,28 @@ app.get /^\/([^e]+)(\/(.+)\.js)?/, (req,res)->
     res.send bundle, { 'Content-type':'text/javascript' }
 
 io.sockets.on 'connection', (socket)->
+
   # receive data from backbone sync
   socket.on 'script', (data)->
-    console.log 'read: ',data
+    console.log 'read: ',JSON.stringify data
     switch data.method
       when 'read'
-        if (q = data.options.query)
+        if (code = data.options.code)
+          Script.findOne {code: code}, (err,script)=>
+            @emit 'script', 'read', script
+        else if (list = data.options.list)
+          Script.list list, (err,matchingScripts)=>
+            console.log 'sending ',_.pluck matchingScripts, 'code'
+            @emit 'script', 'read', matchingScripts
+        else if (q = data.options.query)
           Script.search q, (err, matchingScripts)=>
+            console.log 'sending ',_.pluck matchingScripts, 'code'
             @emit 'script', 'read', matchingScripts
         else
           Script.find (err,scripts)=>
             @emit 'script', 'read', scripts
 
+  # request for a script bundle
   socket.on 'scrundle', (codes)->
     console.log 'recv:',codes
     bd = new Bundler()
@@ -128,5 +92,5 @@ io.sockets.on 'connection', (socket)->
     bd.on 'progress', (count)=>
       @emit 'scrundle:progress', count
 
-
+mongooseAuth.helpExpress(app)
 app.listen 4444
