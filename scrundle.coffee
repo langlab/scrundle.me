@@ -60,9 +60,14 @@ app.get /^\/js\/([^e]+)(\/(.+)\.js)?/, (req,res)->
 io.sockets.on 'connection', (socket)->
 
   # receive data from backbone sync
-  socket.on 'script', (data)->
+  socket.on 'script', (data,cb)->
     console.log 'read: ',JSON.stringify data
     switch data.method
+      when 'codeExists'
+        if (code = data.code)
+          Script.findOne { code: code }, (err,script)=>
+            console.log 'hi: ',script
+            cb(script)
       when 'read'
         if (code = data.options.code)
           Script.findOne {code: code}, (err,script)=>

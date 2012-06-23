@@ -23,7 +23,7 @@ html lang:'en', ->
             li class:"divider-vertical"
             li ->
               a href:'/auth/twitter', ->
-                i class:'icon-twitter'
+                i class:'icon-twitter-sign'
                 text ' Sign in'
 
     div class:'container main', ->

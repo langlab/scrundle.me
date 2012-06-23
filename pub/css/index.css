@@ -78,6 +78,9 @@ h2 .badge {
 .selected-list-cont td {
   cursor: move;
 }
+.icon-large.steps {
+  color: #2f96b4;
+}
 td.select-btn {
   cursor: pointer;
   width: 20px;
