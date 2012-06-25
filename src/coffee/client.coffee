@@ -3,7 +3,7 @@
 # even signed out
 
 w = window
-w.sock = w.io.connect 'http://localhost:4444'
+w.sock = w.io.connect 'http://localhost:8080'
 w.ck = CoffeeKup
 
 $.fn.selectText = ->
@@ -50,6 +50,10 @@ module = (target, name, block) ->
 
 module 'Scrundle', (exports, top)->
   
+  class Session extends Backbone.Model
+    isLoggedIn: ->
+
+
   exports.Views = Views = {}
 
   class Views.NavBar extends Backbone.View
@@ -208,7 +212,7 @@ module 'Scrundle', (exports, top)->
 module 'Scrundle.Script', (exports, top)->
 
   # socket.io sync replacement for Scripts
-  scriptReadSync = (method,model,options)->
+  exports.scriptReadSync = scriptReadSync = (method,model,options)->
     @io ?= window.sock
 
     if method is 'read'
@@ -220,6 +224,7 @@ module 'Scrundle.Script', (exports, top)->
         options.success data
 
 
+
   class Model extends Backbone.Model
 
     idAttribute: "_id"
@@ -228,6 +233,7 @@ module 'Scrundle.Script', (exports, top)->
       selected: false
       uses: 0
 
+    scriptReadSync: scriptReadSync
     sync: scriptReadSync
 
     isSelected: -> @get 'selected'
@@ -237,6 +243,11 @@ module 'Scrundle.Script', (exports, top)->
 
     unSelect: ->
       @set 'selected', false
+
+    isCodeValid = (code,cb)->
+      @io.emit 'script', {method: 'codeExists', code: code}, (script)=>
+      @codeValid = (not script?) or (script._id is @id)
+      cb(@codeValid)
 
   class Collection extends Backbone.Collection
     model: Model

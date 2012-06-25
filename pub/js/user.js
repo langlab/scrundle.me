@@ -26,17 +26,6 @@ module('Scrundle.User', function(exports, top) {
   return exports.Model = Model;
 });
 
-Scrundle.Script.Model.prototype.isCodeValid = function(code, cb) {
-  var _this = this;
-  return this.io.emit('script', {
-    method: 'codeExists',
-    code: code
-  }, function(script) {
-    _this.codeValid = (!(script != null)) || (script._id === _this.id);
-    return cb(_this.codeValid);
-  });
-};
-
 Scrundle.Script.Views.Edit = (function(_super) {
 
   __extends(Edit, _super);
@@ -195,8 +184,9 @@ Scrundle.Script.Views.Edit = (function(_super) {
 $(function() {
   Scrundle.app.views.editView = new Scrundle.Script.Views.Edit();
   Scrundle.app.user = new Scrundle.User.Model(window.user);
+  Scrundle.app.session = window.session;
   Scrundle.app.views.navBar.login(Scrundle.app.user);
-  return Scrundle.app.route('edit/:code', 'editOne', function(code) {
+  return Scrundle.app.route('edit/:id', 'editOne', function(code) {
     var _this = this;
     this.closeViews();
     this.views.editView.model = new Scrundle.Script.Model();

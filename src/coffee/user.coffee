@@ -14,13 +14,7 @@ module 'Scrundle.User', (exports, top)->
   exports.Model = Model
 
 
-
-Scrundle.Script.Model::isCodeValid = (code,cb)->
-  @io.emit 'script', {method: 'codeExists', code: code}, (script)=>
-    @codeValid = (not script?) or (script._id is @id)
-    cb(@codeValid)
     
-
 
 # add an edit view to the Scrupt module
 # for logged-in users only
@@ -38,7 +32,6 @@ class Scrundle.Script.Views.Edit extends Backbone.View
     'keyup input.title, input.code': ->
       @updateTitle()
       @checkCode()
-
 
   checkCode: ->
 
@@ -60,14 +53,10 @@ class Scrundle.Script.Views.Edit extends Backbone.View
           codeError 'This code already exists. Try another' 
         else
           codeError ''
-      
-        
+         
   updateTitle: (e)->
     @$('.title-label').text( @$('input.title').val() ? 'New script' )
     @$('.code-label').text( if (code = @$('input.code').val()) then " (#{ code })" else '' )
-    
-
-    
 
   template: ->
     div class:'modal-header', ->
@@ -99,16 +88,16 @@ class Scrundle.Script.Views.Edit extends Backbone.View
     @delegateEvents()
     @
 
-
 $ ->
 
   Scrundle.app.views.editView = new Scrundle.Script.Views.Edit()
   
   Scrundle.app.user = new Scrundle.User.Model window.user
+  Scrundle.app.session = window.session
   Scrundle.app.views.navBar.login(Scrundle.app.user)
 
   # route for editing a script
-  Scrundle.app.route 'edit/:code','editOne', (code)->
+  Scrundle.app.route 'edit/:id','editOne', (code)->
     @closeViews()
     @views.editView.model = new Scrundle.Script.Model()
     if code
@@ -116,7 +105,7 @@ $ ->
         code: code
         success: =>
           console.log @views.editView.model
-          @views.editView.render().open('body')
+          @views.editView.render( ).open('body')
         error: =>
           alert('no code by that name')
           @navigate '/',true

@@ -6,7 +6,7 @@ var module, w,
 
 w = window;
 
-w.sock = w.io.connect('http://localhost:4444');
+w.sock = w.io.connect('http://localhost:8080');
 
 w.ck = CoffeeKup;
 
@@ -65,7 +65,20 @@ module = function(target, name, block) {
 };
 
 module('Scrundle', function(exports, top) {
-  var Views;
+  var Session, Views;
+  Session = (function(_super) {
+
+    __extends(Session, _super);
+
+    function Session() {
+      return Session.__super__.constructor.apply(this, arguments);
+    }
+
+    Session.prototype.isLoggedIn = function() {};
+
+    return Session;
+
+  })(Backbone.Model);
   exports.Views = Views = {};
   Views.NavBar = (function(_super) {
 
@@ -410,7 +423,7 @@ module('Scrundle', function(exports, top) {
 
 module('Scrundle.Script', function(exports, top) {
   var Collection, Model, Views, scriptReadSync;
-  scriptReadSync = function(method, model, options) {
+  exports.scriptReadSync = scriptReadSync = function(method, model, options) {
     var io, _ref;
     if ((_ref = this.io) == null) {
       this.io = window.sock;
@@ -429,6 +442,7 @@ module('Scrundle.Script', function(exports, top) {
     }
   };
   Model = (function(_super) {
+    var isCodeValid;
 
     __extends(Model, _super);
 
@@ -443,6 +457,8 @@ module('Scrundle.Script', function(exports, top) {
       uses: 0
     };
 
+    Model.prototype.scriptReadSync = scriptReadSync;
+
     Model.prototype.sync = scriptReadSync;
 
     Model.prototype.isSelected = function() {
@@ -455,6 +471,16 @@ module('Scrundle.Script', function(exports, top) {
 
     Model.prototype.unSelect = function() {
       return this.set('selected', false);
+    };
+
+    isCodeValid = function(code, cb) {
+      var _this = this;
+      this.io.emit('script', {
+        method: 'codeExists',
+        code: code
+      }, function(script) {});
+      this.codeValid = (!(typeof script !== "undefined" && script !== null)) || (script._id === this.id);
+      return cb(this.codeValid);
     };
 
     return Model;
