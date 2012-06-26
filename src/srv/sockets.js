@@ -40,29 +40,14 @@ module.exports = function(app) {
     console.log('session: ', socket.handshake.session);
     socket.set('userId', socket.handshake.userId);
     socket.on('script', function(data, cb) {
-      var code, list, q,
+      var list, q,
         _this = this;
-      console.log('read: ', JSON.stringify(data));
+      console.log('sync: ', JSON.stringify(data));
       switch (data.method) {
-        case 'codeExists':
-          if ((code = data.code)) {
-            return Script.findOne({
-              code: code
-            }, function(err, script) {
-              console.log('hi: ', script);
-              return cb(script);
-            });
-          }
-          break;
         case 'read':
           if ((data.id != null)) {
             return Script.findById(data.id, function(err, script) {
               return _this.emit('script', 'read', script);
-            });
-          } else if (data.options.mine) {
-            console.log('mine');
-            return Script.getForUser(socket.handshake.userId, function(err, myScripts) {
-              return _this.emit('script', 'read', myScripts);
             });
           } else if ((list = data.options.list)) {
             return Script.list(list, function(err, matchingScripts) {
@@ -79,6 +64,35 @@ module.exports = function(app) {
               return _this.emit('script', 'read', scripts);
             });
           }
+      }
+    });
+    socket.on('myScript', function(data, cb) {
+      var id,
+        _this = this;
+      switch (data.method) {
+        case 'read':
+          return Script.getForUser(socket.handshake.userId, function(err, myScripts) {
+            return cb(myScripts);
+          });
+        case 'update':
+          console.log('updating ', data.model);
+          id = data.model._id;
+          delete data.model._id;
+          delete data.model._author;
+          return Script.update({
+            _id: id
+          }, {
+            $set: data.model
+          }, function(err, resp) {
+            return console.log('update resp:', resp);
+          });
+        case 'codeExists':
+          return Script.findOne({
+            code: code
+          }, function(err, script) {
+            console.log('hi: ', script);
+            return cb(script);
+          });
       }
     });
     return socket.on('scrundle', function(codes) {

@@ -112,6 +112,11 @@ module('Scrundle', function(exports, top) {
         return ul({
           "class": 'dropdown-menu'
         }, function() {
+          li(function() {
+            return a({
+              href: '#mine'
+            }, 'My scripts');
+          });
           return li(function() {
             return a({
               href: '/logout'
@@ -143,7 +148,7 @@ module('Scrundle', function(exports, top) {
 
     About.prototype.template = function() {
       return div({
-        "class": 'hero-unit title'
+        "class": 'hero-unit'
       }, function() {
         img({
           src: '/img/logo.svg'
@@ -387,6 +392,7 @@ module('Scrundle', function(exports, top) {
 
     Router.prototype.finder = function() {
       var _this = this;
+      this.closeViews();
       return this.views.about.pullUp(function() {
         _this.views.finder.render().open('.main');
         _this.views.bundleView.render().open($('.main'));
@@ -443,7 +449,6 @@ module('Scrundle.Script', function(exports, top) {
     }
   };
   Model = (function(_super) {
-    var isCodeValid;
 
     __extends(Model, _super);
 
@@ -462,6 +467,15 @@ module('Scrundle.Script', function(exports, top) {
 
     Model.prototype.sync = scriptReadSync;
 
+    Model.prototype.getLatestScriptURL = function() {
+      var _ref;
+      return (_ref = this.get('versions').latest) != null ? _ref : '';
+    };
+
+    Model.prototype.getDocsURL = function() {
+      return this.get('docs');
+    };
+
     Model.prototype.isSelected = function() {
       return this.get('selected');
     };
@@ -474,14 +488,15 @@ module('Scrundle.Script', function(exports, top) {
       return this.set('selected', false);
     };
 
-    isCodeValid = function(code, cb) {
+    Model.prototype.isCodeValid = function(code, cb) {
       var _this = this;
-      this.io.emit('script', {
+      return this.collection.io.emit('script', {
         method: 'codeExists',
         code: code
-      }, function(script) {});
-      this.codeValid = (!(typeof script !== "undefined" && script !== null)) || (script._id === this.id);
-      return cb(this.codeValid);
+      }, function(script) {
+        _this.codeValid = (!(script != null)) || (script._id === _this.id);
+        return cb(_this.codeValid);
+      });
     };
 
     return Model;
@@ -975,7 +990,7 @@ module('Scrundle.Script', function(exports, top) {
       }, function() {
         return h2(function() {
           span({
-            "class": 'icon-briefcase icon-large steps'
+            "class": 'icon-gift icon-large steps'
           });
           return text(' Get your script bundle.');
         });

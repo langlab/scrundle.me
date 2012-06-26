@@ -53,7 +53,6 @@ module 'Scrundle', (exports, top)->
   class Session extends Backbone.Model
     isLoggedIn: ->
 
-
   exports.Views = Views = {}
 
   class Views.NavBar extends Backbone.View
@@ -68,6 +67,8 @@ module 'Scrundle', (exports, top)->
           b class:'caret'
         ul class:'dropdown-menu', ->
           li ->
+            a href:'#mine', 'My scripts'
+          li ->
             a href:'/logout', 'Sign out'
 
     login: (@model)->
@@ -78,7 +79,7 @@ module 'Scrundle', (exports, top)->
     class:'about-view'
 
     template: ->
-      div class:'hero-unit title', ->
+      div class:'hero-unit', ->
         img src:'/img/logo.svg'
         div class:'row', ->
           div class:'span9', ->
@@ -183,6 +184,7 @@ module 'Scrundle', (exports, top)->
       @views.about.render().pullDown()
       
     finder: ->
+      @closeViews()
       @views.about.pullUp =>
         @views.finder.render().open('.main')
         @views.bundleView.render().open $('.main')
@@ -236,6 +238,10 @@ module 'Scrundle.Script', (exports, top)->
     scriptReadSync: scriptReadSync
     sync: scriptReadSync
 
+    getLatestScriptURL: -> @get('versions').latest ? ''
+
+    getDocsURL: -> @get('docs')
+
     isSelected: -> @get 'selected'
 
     select: ->
@@ -244,10 +250,10 @@ module 'Scrundle.Script', (exports, top)->
     unSelect: ->
       @set 'selected', false
 
-    isCodeValid = (code,cb)->
-      @io.emit 'script', {method: 'codeExists', code: code}, (script)=>
-      @codeValid = (not script?) or (script._id is @id)
-      cb(@codeValid)
+    isCodeValid: (code,cb)->
+      @collection.io.emit 'script', {method: 'codeExists', code: code}, (script)=>
+        @codeValid = (not script?) or (script._id is @id)
+        cb(@codeValid)
 
   class Collection extends Backbone.Collection
     model: Model
@@ -521,7 +527,7 @@ module 'Scrundle.Script', (exports, top)->
     template: ->
       div class:'page-header', ->
         h2 ->
-          span class:'icon-briefcase icon-large steps'
+          span class:'icon-gift icon-large steps'
           text ' Get your script bundle.'
 
       div class:'row command-view', ->

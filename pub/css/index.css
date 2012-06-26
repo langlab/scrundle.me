@@ -12,22 +12,22 @@ h2 .badge {
 .navbar .user-info img {
   height: 24px;
 }
-.title {
+.hero-unit {
   padding-top: 30px;
   margin: 0px;
 }
-.title img {
+.hero-unit img {
   height: 100px;
   float: left;
 }
-.title .code {
+.hero-unit .code {
   margin: 20px;
 }
-.title .instructions {
+.hero-unit .instructions {
   margin-top: 26px;
   margin-left: 20px;
 }
-.title .terminal {
+.hero-unit .terminal {
   color: #00a200;
   background-color: #fff;
   padding: 2px 6px 2px 6px;
@@ -35,13 +35,13 @@ h2 .badge {
   border-radius: 5px;
   font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
 }
-.title .link {
+.hero-unit .link {
   color: #08c;
   margin: 20px;
   padding: 2px 6px 2px 6px;
   font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
 }
-.title .code {
+.hero-unit .code {
   margin-top: 20px;
   margin-bottom: 20px;
 }
@@ -236,4 +236,11 @@ iframe.with-float-bar {
 }
 #BB_BuyButtonForm input[type=image] {
   width: 121px;
+}
+.user-scripts {
+  margin-left: 40px;
+}
+.user-list-view tr.sel {
+  font-weight: bold;
+  background-color: #f5f5f5;
 }

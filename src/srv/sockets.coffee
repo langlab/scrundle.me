@@ -36,25 +36,16 @@ module.exports = (app)->
     console.log 'session: ', socket.handshake.session
     socket.set 'userId', socket.handshake.userId
     # receive data from backbone sync
+    
     socket.on 'script', (data,cb)->
-      console.log 'read: ',JSON.stringify data
+      console.log 'sync: ',JSON.stringify data
       
       switch data.method
         
-        when 'codeExists'
-          if (code = data.code)
-            Script.findOne { code: code }, (err,script)=>
-              console.log 'hi: ',script
-              cb(script)
-
         when 'read'
           if (data.id?)
             Script.findById data.id, (err,script)=>
               @emit 'script', 'read', script
-          else if data.options.mine
-            console.log 'mine'
-            Script.getForUser socket.handshake.userId, (err,myScripts)=>
-              @emit 'script', 'read', myScripts
           else if (list = data.options.list)
             Script.list list, (err,matchingScripts)=>
               console.log 'sending ',_.pluck matchingScripts, 'code'
@@ -66,6 +57,30 @@ module.exports = (app)->
           else
             Script.find (err,scripts)=>
               @emit 'script', 'read', scripts
+
+    socket.on 'myScript', (data, cb)->
+      
+      switch data.method
+
+        when 'read'
+          Script.getForUser socket.handshake.userId, (err,myScripts)=>
+            cb(myScripts)
+        
+        when 'update'
+          console.log 'updating ',data.model
+          id = data.model._id
+          delete data.model._id
+          delete data.model._author
+          Script.update { _id: id }, {$set: data.model}, (err,resp)=>
+            console.log 'update resp:',resp
+
+        when 'codeExists'
+          Script.findOne { code: code }, (err,script)=>
+            console.log 'hi: ',script
+            cb(script)
+
+
+
 
     # request for a script bundle
     socket.on 'scrundle', (codes)->

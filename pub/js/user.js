@@ -2,8 +2,24 @@
 var __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
-module('Scrundle.User', function(exports, top) {
-  var Model;
+module('Scrundle.User.Script', function(exports) {
+  var Collection, Model, Views, userSync;
+  exports.Views = Views = {};
+  userSync = function(method, model, options) {
+    var _ref,
+      _this = this;
+    if ((_ref = this.io) == null) {
+      this.io = window.sock;
+    }
+    console.log('myscript sync: ', method, model, options);
+    return this.io.emit('myScript', {
+      method: method,
+      model: model,
+      options: options
+    }, function(response) {
+      return options.success(response);
+    });
+  };
   Model = (function(_super) {
 
     __extends(Model, _super);
@@ -12,43 +28,160 @@ module('Scrundle.User', function(exports, top) {
       return Model.__super__.constructor.apply(this, arguments);
     }
 
-    Model.prototype.initialize = function() {
-      this.myScripts = new Scrundle.Script.Collection();
-      return this.myScripts.fetch({
-        mine: true
-      });
-    };
-
-    Model.prototype.getName = function() {
-      return this.get('twit').name;
-    };
-
-    Model.prototype.getIconUrl = function() {
-      return this.get('twit').profileImageUrl;
-    };
+    Model.prototype.sync = userSync;
 
     return Model;
 
-  })(Backbone.Model);
-  return exports.Model = Model;
-});
+  })(Scrundle.Script.Model);
+  Collection = (function(_super) {
 
-module('Scrundle.User.Script', function(exports) {
-  var Views;
-  exports.Views = Views = {};
-  Views.Edit = (function(_super) {
+    __extends(Collection, _super);
 
-    __extends(Edit, _super);
-
-    function Edit() {
-      return Edit.__super__.constructor.apply(this, arguments);
+    function Collection() {
+      return Collection.__super__.constructor.apply(this, arguments);
     }
 
-    Edit.prototype.tagName = 'div';
+    Collection.prototype.model = Model;
 
-    Edit.prototype.className = 'edit-view modal hide';
+    Collection.prototype.sync = userSync;
 
-    Edit.prototype.urlTemplate = function() {
+    return Collection;
+
+  })(Scrundle.Script.Collection);
+  Views.ListItem = (function(_super) {
+
+    __extends(ListItem, _super);
+
+    function ListItem() {
+      return ListItem.__super__.constructor.apply(this, arguments);
+    }
+
+    ListItem.prototype.tagName = 'tr';
+
+    ListItem.prototype.events = {
+      'click': function() {
+        return this.trigger('edit', this.model);
+      }
+    };
+
+    ListItem.prototype.template = function() {
+      td("" + (this.get('code')));
+      td("" + (this.get('title')));
+      return td("" + (this.get('description')));
+    };
+
+    ListItem.prototype.render = function() {
+      this.$el.html(ck.render(this.template, this.model));
+      return this;
+    };
+
+    return ListItem;
+
+  })(Backbone.View);
+  Views.MyScripts = (function(_super) {
+
+    __extends(MyScripts, _super);
+
+    function MyScripts() {
+      return MyScripts.__super__.constructor.apply(this, arguments);
+    }
+
+    MyScripts.prototype.tagName = 'section';
+
+    MyScripts.prototype.className = 'user-scripts';
+
+    MyScripts.prototype.template = function() {
+      return div({
+        "class": 'row'
+      }, function() {
+        div({
+          "class": 'container span5 pull-left'
+        }, function() {
+          div({
+            "class": 'page-header'
+          }, function() {
+            return h2(function() {
+              span({
+                "class": 'icon-briefcase icon-large steps'
+              });
+              return text(' My scripts');
+            });
+          });
+          return div({
+            "class": 'user-list-view span5'
+          }, function() {
+            return table({
+              "class": 'table'
+            }, function() {
+              return tbody(function() {});
+            });
+          });
+        });
+        return div({
+          "class": 'user-edit-view span6'
+        }, function() {});
+      });
+    };
+
+    MyScripts.prototype.addListItem = function(script) {
+      var _this = this;
+      script.listView = new Views.ListItem({
+        model: script
+      });
+      script.listView.render().$el.appendTo(this.$('.user-list-view tbody'));
+      script.listView.on('edit', function(selectedScript) {
+        return _this.editItem(selectedScript);
+      });
+      return this;
+    };
+
+    MyScripts.prototype.editItem = function(script) {
+      var _ref;
+      this.$('.user-list-view tr').removeClass('sel');
+      script.listView.$el.addClass('sel');
+      if ((_ref = this.detailView) != null) {
+        _ref.remove();
+      }
+      this.detailView = new Views.DetailItem({
+        model: script
+      });
+      this.detailView.render().$el.appendTo(this.$('.user-edit-view'));
+      return this;
+    };
+
+    MyScripts.prototype.render = function() {
+      var _this = this;
+      this.$el.html(ck.render(this.template));
+      this.collection.each(function(script) {
+        return _this.addListItem(script);
+      });
+      return this;
+    };
+
+    return MyScripts;
+
+  })(Backbone.View);
+  Views.DetailItem = (function(_super) {
+
+    __extends(DetailItem, _super);
+
+    function DetailItem() {
+      return DetailItem.__super__.constructor.apply(this, arguments);
+    }
+
+    DetailItem.prototype.tagName = 'form';
+
+    DetailItem.prototype.className = 'edit-view well form-horizontal';
+
+    DetailItem.prototype.initialize = function() {
+      var _this = this;
+      return this.model.on('change', function(m) {
+        console.log('changed: ', m);
+        return _this.model.listView.render();
+      });
+    };
+
+    DetailItem.prototype.urlTemplate = function() {
       return fieldset({
         "class": 'control-group'
       }, function() {
@@ -60,14 +193,31 @@ module('Scrundle.User.Script', function(exports) {
       });
     };
 
-    Edit.prototype.events = {
+    DetailItem.prototype.events = {
       'keyup input.title, input.code': function() {
         this.updateTitle();
         return this.checkCode();
+      },
+      'change input, textarea': function() {
+        var changes,
+          _this = this;
+        changes = {
+          title: this.$('input.title').val(),
+          description: this.$('textarea.description').val(),
+          docs: this.$('input.docs').val(),
+          versions: {
+            latest: this.$('input.latest').val()
+          }
+        };
+        return this.model.save(changes, {
+          success: function(model, resp) {
+            return console.log('save resp: ', resp);
+          }
+        });
       }
     };
 
-    Edit.prototype.checkCode = function() {
+    DetailItem.prototype.checkCode = function() {
       var codeError,
         _this = this;
       codeError = function(errText) {
@@ -95,15 +245,15 @@ module('Scrundle.User.Script', function(exports) {
       }
     };
 
-    Edit.prototype.updateTitle = function(e) {
+    DetailItem.prototype.updateTitle = function(e) {
       var code, _ref;
       this.$('.title-label').text((_ref = this.$('input.title').val()) != null ? _ref : 'New script');
       return this.$('.code-label').text((code = this.$('input.code').val()) ? " (" + code + ")" : '');
     };
 
-    Edit.prototype.template = function() {
+    DetailItem.prototype.template = function() {
       div({
-        "class": 'modal-header'
+        "class": 'page-header'
       }, function() {
         return h3(function() {
           var code, _ref;
@@ -117,47 +267,98 @@ module('Scrundle.User.Script', function(exports) {
           }
         });
       });
-      div({
-        "class": 'modal-body'
+      return fieldset({
+        "class": ''
       }, function() {
-        return form({
-          "class": 'edit-form form-inline'
+        div({
+          "class": 'control-group title'
         }, function() {
-          fieldset({
-            "class": 'control-group code'
+          label({
+            "class": 'control-label'
+          }, 'Title:');
+          return div({
+            "class": 'controls'
           }, function() {
-            return div({
-              "class": 'controls'
-            }, function() {
-              var _ref;
-              input({
-                type: 'text',
-                "class": 'code span1',
-                placeholder: 'code',
-                value: "" + ((_ref = this.get('code')) != null ? _ref : '')
-              });
-              return p({
-                "class": 'help-block'
-              });
+            var _ref;
+            return input({
+              type: 'text',
+              "class": 'title span3',
+              placeholder: 'title',
+              value: "" + ((_ref = this.get('title')) != null ? _ref : '')
             });
           });
-          fieldset({
-            "class": 'control-group title'
+        });
+        div({
+          "class": 'control-group code'
+        }, function() {
+          label({
+            "class": 'control-label'
+          }, 'Code:');
+          return div({
+            "class": 'controls'
           }, function() {
-            return div({
-              "class": 'controls'
-            }, function() {
-              var _ref;
-              return input({
-                type: 'text',
-                "class": 'title span3',
-                placeholder: 'title',
-                value: "" + ((_ref = this.get('title')) != null ? _ref : '')
-              });
+            var _ref;
+            input({
+              type: 'text',
+              "class": 'code span1',
+              placeholder: 'code',
+              value: "" + ((_ref = this.get('code')) != null ? _ref : '')
             });
+            return span({
+              "class": 'help-inline'
+            }, 'unique code < 5 characters');
           });
-          return fieldset({
-            "class": 'control-group'
+        });
+        div({
+          "class": 'control-group'
+        }, function() {
+          label({
+            "class": 'control-label'
+          }, 'Script (latest):');
+          return div({
+            "class": 'controls'
+          }, function() {
+            var _ref;
+            input({
+              type: 'text',
+              "class": 'latest',
+              placeholder: 'script url',
+              value: "" + ((_ref = this.getLatestScriptURL()) != null ? _ref : '')
+            });
+            return span({
+              "class": 'help-inline'
+            }, '');
+          });
+        });
+        div({
+          "class": 'control-group'
+        }, function() {
+          label({
+            "class": 'control-label'
+          }, 'Docs:');
+          return div({
+            "class": 'controls'
+          }, function() {
+            var _ref;
+            input({
+              type: 'text',
+              "class": 'docs',
+              placeholder: 'docs url',
+              value: "" + ((_ref = this.getLatestScriptURL()) != null ? _ref : '')
+            });
+            return span({
+              "class": 'help-inline'
+            }, '');
+          });
+        });
+        div({
+          "class": 'control-group'
+        }, function() {
+          label({
+            "class": 'control-label'
+          }, 'Description:');
+          return div({
+            "class": 'controls'
           }, function() {
             var _ref;
             return textarea({
@@ -166,74 +367,97 @@ module('Scrundle.User.Script', function(exports) {
             }, "" + ((_ref = this.get('description')) != null ? _ref : ''));
           });
         });
-      });
-      return div({
-        "class": 'modal-footer'
-      }, function() {
-        return button({
-          "class": 'btn btn-success save'
-        }, 'save');
+        return div({
+          "class": 'modal-footer'
+        }, function() {
+          button({
+            "class": 'btn cancel'
+          }, 'Cancel');
+          button({
+            "class": 'btn btn-danger delete'
+          }, 'Delete');
+          return button({
+            "class": 'btn btn-success save'
+          }, 'Save');
+        });
       });
     };
 
-    Edit.prototype.render = function() {
+    DetailItem.prototype.render = function() {
       this.$el.html(ck.render(this.template, this.model));
-      return this;
-    };
-
-    Edit.prototype.open = function() {
-      this.$el.modal('show');
       this.delegateEvents();
       return this;
     };
 
-    return Edit;
+    return DetailItem;
 
   })(Backbone.View);
-  return Views.List = (function() {
+  Views.List = (function(_super) {
 
-    function List() {}
+    __extends(List, _super);
 
-    List.prototype.tagName = 'table';
+    function List() {
+      return List.__super__.constructor.apply(this, arguments);
+    }
 
-    List.prototype.className = 'user-list-view table';
+    List.prototype.tagName = 'div';
 
-    List.prototype.render = function() {};
+    List.prototype.className = 'user-list-view span6';
+
+    List.prototype.template = function() {};
+
+    List.prototype.render = function() {
+      this.$el.html(ck.render(this.template, this));
+      return this;
+    };
 
     return List;
 
-  })();
+  })(Backbone.View);
+  exports.Model = Model;
+  return exports.Collection = Collection;
+});
+
+module('Scrundle.User', function(exports, top) {
+  var Model;
+  Model = (function(_super) {
+
+    __extends(Model, _super);
+
+    function Model() {
+      return Model.__super__.constructor.apply(this, arguments);
+    }
+
+    Model.prototype.initialize = function() {
+      this.myScripts = new Scrundle.User.Script.Collection();
+      return this.myScripts.fetch({
+        mine: true
+      });
+    };
+
+    Model.prototype.getName = function() {
+      return this.get('twit').name;
+    };
+
+    Model.prototype.getIconUrl = function() {
+      return this.get('twit').profileImageUrl;
+    };
+
+    return Model;
+
+  })(Backbone.Model);
+  return exports.Model = Model;
 });
 
 $(function() {
   Scrundle.app.user = new Scrundle.User.Model(window.user);
   Scrundle.app.session = window.session;
   Scrundle.app.views.navBar.login(Scrundle.app.user);
-  Scrundle.app.route('mine', 'myScripts', function() {
+  return Scrundle.app.route('mine', 'mine', function() {
     this.closeViews();
-    return Scrundle.app.views.myScripts = new Scrundle.User.Script.Views.List();
-  });
-  return Scrundle.app.route('edit/:id', 'editOne', function(code) {
-    var eModel,
-      _this = this;
-    this.closeViews();
-    eModel = this.views.editView.model = new Scrundle.Script.Model();
-    if (id) {
-      eModel.set('_id', id);
-      eModel.fetch({
-        success: function() {
-          console.log(eModel);
-          return _this.views.editView.render().open('body');
-        },
-        error: function(err) {
-          console.log(err);
-          eModel.set('_id', null);
-          return eModel.render().open('body');
-        }
-      });
-    } else {
-      this.views.editView.render().open('body');
-    }
-    return this;
+    Scrundle.app.views.myScripts = new Scrundle.User.Script.Views.MyScripts({
+      collection: Scrundle.app.user.myScripts
+    });
+    return Scrundle.app.views.myScripts.render().open();
   });
 });
