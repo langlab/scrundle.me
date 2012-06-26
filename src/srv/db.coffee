@@ -15,7 +15,7 @@ UserSchema.plugin mongooseAuth, {
 
   twitter:
     everyauth:
-      myHostname: 'http://pzzd.selfip.net:4444'
+      myHostname: 'http://dev.scrundle.me'
       consumerKey: 'aoMCcJR62q9GYRAP9OOUQ'
       consumerSecret: 'oT133ULqySY3H55xWQHa7nA5iV7a1UzAFJMnubyw'
       callbackPath: '/twitter/callback'
@@ -24,7 +24,7 @@ UserSchema.plugin mongooseAuth, {
   
   github:
     everyauth:
-      myHostname: 'http://pzzd.selfip.net:4444'
+      myHostname: 'http://dev.scrundle.me'
       appId: 'd1db5a91b494ce515816'
       callbackPath: '/github/callback'
       appSecret: 'ccf4ed6bb7fdaace5dec7316bfc36dc8f2e7116b'
@@ -36,6 +36,7 @@ UserSchema.plugin mongooseAuth, {
 
 
 ScriptSchema = new Schema {
+  _author: { type: ObjectId, ref: 'User', default: "4fe39dd2444ddc0c03000001" }
   code: String
   title: String
   description: String
@@ -44,6 +45,10 @@ ScriptSchema = new Schema {
 }
 
 ScriptSchema.statics =
+  getForUser: (authorId, cb)->
+    @find({ _author: authorId }).sort('uses',-1).exec (err,scripts)=>
+      cb err, scripts 
+
   search: (term,cb)->
     @find({
       $or: [ 

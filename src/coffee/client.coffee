@@ -3,7 +3,7 @@
 # even signed out
 
 w = window
-w.sock = w.io.connect 'http://localhost:8080'
+w.sock = w.io.connect 'http://dev.scrundle.me'
 w.ck = CoffeeKup
 
 $.fn.selectText = ->
@@ -68,7 +68,7 @@ module 'Scrundle', (exports, top)->
           b class:'caret'
         ul class:'dropdown-menu', ->
           li ->
-            a href:'#', 'hi'
+            a href:'/logout', 'Sign out'
 
     login: (@model)->
       @$('.user-info').html ck.render @menuTemplate, @model
@@ -82,7 +82,7 @@ module 'Scrundle', (exports, top)->
         img src:'/img/logo.svg'
         div class:'row', ->
           div class:'span9', ->
-            h1 "Hi, I'm Scrundle"
+            h1 "Scrundle"
             p "Use my name like a verb and I'll order and bundle scripts in a nice package for you."
             p "For example, to get jQuery + underscoreJS + backboneJS in order and save locally, just curl an instructional url, like this:"
             div class:'code',->
@@ -214,9 +214,9 @@ module 'Scrundle.Script', (exports, top)->
   # socket.io sync replacement for Scripts
   exports.scriptReadSync = scriptReadSync = (method,model,options)->
     @io ?= window.sock
-
+    console.log 'sync: ',method,model,options
     if method is 'read'
-      @io.emit 'script', {method: method, id: model.id?, options: options}
+      @io.emit 'script', {method: method, id: model.id, options: options}
 
       io = @io
       @io.on 'script', (method,data)->
@@ -329,6 +329,7 @@ module 'Scrundle.Script', (exports, top)->
       @$el.attr 'id', @model.id
       @
 
+
   class Views.Finder extends Backbone.View
     tagName: 'section'
     id: 'finder-view'
@@ -402,8 +403,8 @@ module 'Scrundle.Script', (exports, top)->
             @doSearch(e)
 
     doSearch: (e)->
-      @$('.icon-search').hide()
-      @$('img.wait').show()
+      @$('.input-prepend .icon-search').hide()
+      $('img.wait').show()
       clearInterval @searchTimer
       query = $(e.target).val()
       console.log 'doing query: ',query
@@ -414,7 +415,7 @@ module 'Scrundle.Script', (exports, top)->
         success: =>
           console.log 'fetch success'
           @renderScripts()
-          @$('.icon-search').show()
+          @$('.input-prepend .icon-search').show()
           @$('img.wait').hide()
       }
       if $(e.target).val() then @$('.add-btn').show()

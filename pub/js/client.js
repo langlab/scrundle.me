@@ -6,7 +6,7 @@ var module, w,
 
 w = window;
 
-w.sock = w.io.connect('http://localhost:8080');
+w.sock = w.io.connect('http://dev.scrundle.me');
 
 w.ck = CoffeeKup;
 
@@ -114,8 +114,8 @@ module('Scrundle', function(exports, top) {
         }, function() {
           return li(function() {
             return a({
-              href: '#'
-            }, 'hi');
+              href: '/logout'
+            }, 'Sign out');
           });
         });
       });
@@ -154,7 +154,7 @@ module('Scrundle', function(exports, top) {
           return div({
             "class": 'span9'
           }, function() {
-            h1("Hi, I'm Scrundle");
+            h1("Scrundle");
             p("Use my name like a verb and I'll order and bundle scripts in a nice package for you.");
             p("For example, to get jQuery + underscoreJS + backboneJS in order and save locally, just curl an instructional url, like this:");
             div({
@@ -428,10 +428,11 @@ module('Scrundle.Script', function(exports, top) {
     if ((_ref = this.io) == null) {
       this.io = window.sock;
     }
+    console.log('sync: ', method, model, options);
     if (method === 'read') {
       this.io.emit('script', {
         method: method,
-        id: model.id != null,
+        id: model.id,
         options: options
       });
       io = this.io;
@@ -801,8 +802,8 @@ module('Scrundle.Script', function(exports, top) {
     Finder.prototype.doSearch = function(e) {
       var query,
         _this = this;
-      this.$('.icon-search').hide();
-      this.$('img.wait').show();
+      this.$('.input-prepend .icon-search').hide();
+      $('img.wait').show();
       clearInterval(this.searchTimer);
       query = $(e.target).val();
       console.log('doing query: ', query);
@@ -813,7 +814,7 @@ module('Scrundle.Script', function(exports, top) {
         success: function() {
           console.log('fetch success');
           _this.renderScripts();
-          _this.$('.icon-search').show();
+          _this.$('.input-prepend .icon-search').show();
           return _this.$('img.wait').hide();
         }
       });

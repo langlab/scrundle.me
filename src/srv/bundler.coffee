@@ -19,7 +19,7 @@ class Bundler extends events.EventEmitter
         cb ord,scriptData
 
   getBundle: (scriptKeys)->
-    console.log 'BUNDLING: ',scriptKeys
+    #console.log 'BUNDLING: ',scriptKeys
     bundle = []
     scriptsDownloaded = 0
     

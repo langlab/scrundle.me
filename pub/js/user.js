@@ -12,6 +12,13 @@ module('Scrundle.User', function(exports, top) {
       return Model.__super__.constructor.apply(this, arguments);
     }
 
+    Model.prototype.initialize = function() {
+      this.myScripts = new Scrundle.Script.Collection();
+      return this.myScripts.fetch({
+        mine: true
+      });
+    };
+
     Model.prototype.getName = function() {
       return this.get('twit').name;
     };
@@ -26,180 +33,202 @@ module('Scrundle.User', function(exports, top) {
   return exports.Model = Model;
 });
 
-Scrundle.Script.Views.Edit = (function(_super) {
+module('Scrundle.User.Script', function(exports) {
+  var Views;
+  exports.Views = Views = {};
+  Views.Edit = (function(_super) {
 
-  __extends(Edit, _super);
+    __extends(Edit, _super);
 
-  function Edit() {
-    return Edit.__super__.constructor.apply(this, arguments);
-  }
-
-  Edit.prototype.tagName = 'div';
-
-  Edit.prototype.className = 'edit-view modal hide';
-
-  Edit.prototype.urlTemplate = function() {
-    return fieldset({
-      "class": 'control-group'
-    }, function() {
-      return input({
-        type: 'text',
-        "class": 'span2',
-        placeholder: 'script url'
-      });
-    });
-  };
-
-  Edit.prototype.events = {
-    'keyup input.title, input.code': function() {
-      this.updateTitle();
-      return this.checkCode();
+    function Edit() {
+      return Edit.__super__.constructor.apply(this, arguments);
     }
-  };
 
-  Edit.prototype.checkCode = function() {
-    var codeError,
-      _this = this;
-    codeError = function(errText) {
-      if (errText) {
-        this.$('.control-group.code').addClass('error');
-      } else {
-        this.$('.control-group.code').removeClass('error');
-      }
-      this.$('.code .help-block').text(errText);
-      return errText;
-    };
-    if (this.$('input.code').val() === '') {
-      return codeError('You must enter a code.');
-    } else {
-      return this.model.isCodeValid(this.$('input.code').val(), function(codeAvailable) {
-        var alreadyExists;
-        console.log(codeAvailable);
-        alreadyExists = !codeAvailable;
-        if (alreadyExists) {
-          return codeError('This code already exists. Try another');
-        } else {
-          return codeError('');
-        }
-      });
-    }
-  };
+    Edit.prototype.tagName = 'div';
 
-  Edit.prototype.updateTitle = function(e) {
-    var code, _ref;
-    this.$('.title-label').text((_ref = this.$('input.title').val()) != null ? _ref : 'New script');
-    return this.$('.code-label').text((code = this.$('input.code').val()) ? " (" + code + ")" : '');
-  };
+    Edit.prototype.className = 'edit-view modal hide';
 
-  Edit.prototype.template = function() {
-    div({
-      "class": 'modal-header'
-    }, function() {
-      return h3(function() {
-        var code, _ref;
-        span({
-          "class": 'title-label'
-        }, "" + ((_ref = this.get('title')) != null ? _ref : 'New script'));
-        if ((code = this.get('code')) != null) {
-          return span({
-            "class": 'code-label'
-          }, " (" + code + ")");
-        }
-      });
-    });
-    div({
-      "class": 'modal-body'
-    }, function() {
-      return form({
-        "class": 'edit-form form-inline'
+    Edit.prototype.urlTemplate = function() {
+      return fieldset({
+        "class": 'control-group'
       }, function() {
-        fieldset({
-          "class": 'control-group code'
-        }, function() {
-          return div({
-            "class": 'controls'
-          }, function() {
-            var _ref;
-            input({
-              type: 'text',
-              "class": 'code span1',
-              placeholder: 'code',
-              value: "" + ((_ref = this.get('code')) != null ? _ref : '')
-            });
-            return p({
-              "class": 'help-block'
-            });
-          });
-        });
-        fieldset({
-          "class": 'control-group title'
-        }, function() {
-          return div({
-            "class": 'controls'
-          }, function() {
-            var _ref;
-            return input({
-              type: 'text',
-              "class": 'title span3',
-              placeholder: 'title',
-              value: "" + ((_ref = this.get('title')) != null ? _ref : '')
-            });
-          });
-        });
-        return fieldset({
-          "class": 'control-group'
-        }, function() {
-          var _ref;
-          return textarea({
-            "class": 'description',
-            placeholder: 'script description...'
-          }, "" + ((_ref = this.get('description')) != null ? _ref : ''));
+        return input({
+          type: 'text',
+          "class": 'span2',
+          placeholder: 'script url'
         });
       });
-    });
-    return div({
-      "class": 'modal-footer'
-    }, function() {
-      return button({
-        "class": 'btn btn-success save'
-      }, 'save');
-    });
-  };
+    };
 
-  Edit.prototype.render = function() {
-    this.$el.html(ck.render(this.template, this.model));
-    return this;
-  };
+    Edit.prototype.events = {
+      'keyup input.title, input.code': function() {
+        this.updateTitle();
+        return this.checkCode();
+      }
+    };
 
-  Edit.prototype.open = function() {
-    this.$el.modal('show');
-    this.delegateEvents();
-    return this;
-  };
+    Edit.prototype.checkCode = function() {
+      var codeError,
+        _this = this;
+      codeError = function(errText) {
+        if (errText) {
+          this.$('.control-group.code').addClass('error');
+        } else {
+          this.$('.control-group.code').removeClass('error');
+        }
+        this.$('.code .help-block').text(errText);
+        return errText;
+      };
+      if (this.$('input.code').val() === '') {
+        return codeError('You must enter a code.');
+      } else {
+        return this.model.isCodeValid(this.$('input.code').val(), function(codeAvailable) {
+          var alreadyExists;
+          console.log(codeAvailable);
+          alreadyExists = !codeAvailable;
+          if (alreadyExists) {
+            return codeError('This code already exists. Try another');
+          } else {
+            return codeError('');
+          }
+        });
+      }
+    };
 
-  return Edit;
+    Edit.prototype.updateTitle = function(e) {
+      var code, _ref;
+      this.$('.title-label').text((_ref = this.$('input.title').val()) != null ? _ref : 'New script');
+      return this.$('.code-label').text((code = this.$('input.code').val()) ? " (" + code + ")" : '');
+    };
 
-})(Backbone.View);
+    Edit.prototype.template = function() {
+      div({
+        "class": 'modal-header'
+      }, function() {
+        return h3(function() {
+          var code, _ref;
+          span({
+            "class": 'title-label'
+          }, "" + ((_ref = this.get('title')) != null ? _ref : 'New script'));
+          if ((code = this.get('code')) != null) {
+            return span({
+              "class": 'code-label'
+            }, " (" + code + ")");
+          }
+        });
+      });
+      div({
+        "class": 'modal-body'
+      }, function() {
+        return form({
+          "class": 'edit-form form-inline'
+        }, function() {
+          fieldset({
+            "class": 'control-group code'
+          }, function() {
+            return div({
+              "class": 'controls'
+            }, function() {
+              var _ref;
+              input({
+                type: 'text',
+                "class": 'code span1',
+                placeholder: 'code',
+                value: "" + ((_ref = this.get('code')) != null ? _ref : '')
+              });
+              return p({
+                "class": 'help-block'
+              });
+            });
+          });
+          fieldset({
+            "class": 'control-group title'
+          }, function() {
+            return div({
+              "class": 'controls'
+            }, function() {
+              var _ref;
+              return input({
+                type: 'text',
+                "class": 'title span3',
+                placeholder: 'title',
+                value: "" + ((_ref = this.get('title')) != null ? _ref : '')
+              });
+            });
+          });
+          return fieldset({
+            "class": 'control-group'
+          }, function() {
+            var _ref;
+            return textarea({
+              "class": 'description',
+              placeholder: 'script description...'
+            }, "" + ((_ref = this.get('description')) != null ? _ref : ''));
+          });
+        });
+      });
+      return div({
+        "class": 'modal-footer'
+      }, function() {
+        return button({
+          "class": 'btn btn-success save'
+        }, 'save');
+      });
+    };
+
+    Edit.prototype.render = function() {
+      this.$el.html(ck.render(this.template, this.model));
+      return this;
+    };
+
+    Edit.prototype.open = function() {
+      this.$el.modal('show');
+      this.delegateEvents();
+      return this;
+    };
+
+    return Edit;
+
+  })(Backbone.View);
+  return Views.List = (function() {
+
+    function List() {}
+
+    List.prototype.tagName = 'table';
+
+    List.prototype.className = 'user-list-view table';
+
+    List.prototype.render = function() {};
+
+    return List;
+
+  })();
+});
 
 $(function() {
-  Scrundle.app.views.editView = new Scrundle.Script.Views.Edit();
   Scrundle.app.user = new Scrundle.User.Model(window.user);
   Scrundle.app.session = window.session;
   Scrundle.app.views.navBar.login(Scrundle.app.user);
-  return Scrundle.app.route('edit/:id', 'editOne', function(code) {
-    var _this = this;
+  Scrundle.app.route('mine', 'myScripts', function() {
     this.closeViews();
-    this.views.editView.model = new Scrundle.Script.Model();
-    if (code) {
-      this.views.editView.model.fetch({
-        code: code,
+    return Scrundle.app.views.myScripts = new Scrundle.User.Script.Views.List();
+  });
+  return Scrundle.app.route('edit/:id', 'editOne', function(code) {
+    var eModel,
+      _this = this;
+    this.closeViews();
+    eModel = this.views.editView.model = new Scrundle.Script.Model();
+    if (id) {
+      eModel.set('_id', id);
+      eModel.fetch({
         success: function() {
-          console.log(_this.views.editView.model);
+          console.log(eModel);
           return _this.views.editView.render().open('body');
         },
-        error: function() {
-          alert('no code by that name');
-          return _this.navigate('/', true);
+        error: function(err) {
+          console.log(err);
+          eModel.set('_id', null);
+          return eModel.render().open('body');
         }
       });
     } else {
